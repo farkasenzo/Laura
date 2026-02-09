@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Valentine</title>
+  <style>
+    :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #ffe6ef, #fff6d6);
+    }
+    .card {
+      width: min(560px, 92vw);
+      background: rgba(255,255,255,0.75);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(0,0,0,0.06);
+      border-radius: 20px;
+      padding: 28px 22px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      text-align: center;
+      position: relative;
+    }
+    h1 {
+      margin: 0 0 18px;
+      font-size: clamp(24px, 4vw, 34px);
+      letter-spacing: 0.2px;
+    }
+
+    .btn-row {
+      margin-top: 10px;
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    button {
+      border: 0;
+      padding: 12px 18px;
+      border-radius: 999px;
+      font-weight: 650;
+      font-size: 16px;
+      cursor: pointer;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.12);
+      transition: transform 120ms ease, box-shadow 120ms ease;
+      user-select: none;
+    }
+    button:active { transform: translateY(1px); box-shadow: 0 6px 12px rgba(0,0,0,0.12); }
+
+    #yesBtn { background: #20c997; color: white; }
+    #noBtn  { background: #ff5c7a; color: white; }
+
+    /* A "Nem" gomb abszolútan mozog majd a kártyán belül */
+    #noBtn {
+      position: absolute;
+      left: 50%;
+      top: 64%;
+      transform: translate(-50%, -50%);
+    }
+
+    /* A sor azért kell, hogy a YES mindig kényelmes helyen legyen */
+    #yesHolder { display: inline-block; }
+
+    /* Cica popup */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      place-items: center;
+      background: rgba(0,0,0,0.25);
+      padding: 20px;
+    }
+    .popup {
+      background: white;
+      border-radius: 22px;
+      padding: 22px 18px;
+      width: min(420px, 92vw);
+      text-align: center;
+      box-shadow: 0 18px 50px rgba(0,0,0,0.22);
+      border: 1px solid rgba(0,0,0,0.06);
+      animation: pop 180ms ease-out;
+    }
+    @keyframes pop {
+      from { transform: scale(0.92); opacity: 0.4; }
+      to   { transform: scale(1); opacity: 1; }
+    }
+    .cat {
+      font-size: 86px;
+      line-height: 1;
+      margin: 6px 0 8px;
+    }
+    .close {
+      margin-top: 10px;
+      background: #111;
+      color: #fff;
+      box-shadow: none;
+    }
+    .hint {
+      margin-top: 14px;
+      font-size: 13px;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+  <div class="card" id="card">
+    <h1>Will you be my valentine Laura.</h1>
+
+    <div class="btn-row" aria-label="válasz gombok">
+      <span id="yesHolder">
+        <button id="yesBtn" type="button">Igen</button>
+      </span>
+      <!-- A "Nem" gomb külön, abszolút pozícióban van -->
+      <button id="noBtn" type="button">Nem</button>
+    </div>
+
+    <div class="hint">Tipp: a "Nem" gombot elkapni szinte lehetetlen.</div>
+  </div>
+
+<div class="overlay" id="overlay">
+  <div class="popup">
+    <img src="cica.jpg" alt="Cicák" class="cat-img">
+    <h2>Juhuu!</h2>
+    <div>Boldog Valentin-napot!</div>
+    <button class="close" id="closeBtn" type="button">Bezár</button>
+  </div>
+</div>
+
+  <script>
+    const card = document.getElementById("card");
+    const noBtn = document.getElementById("noBtn");
+    const yesBtn = document.getElementById("yesBtn");
+    const overlay = document.getElementById("overlay");
+    const closeBtn = document.getElementById("closeBtn");
+
+    function moveNoButton() {
+      const cardRect = card.getBoundingClientRect();
+      const btnRect = noBtn.getBoundingClientRect();
+
+      // Biztonsági margók, hogy ne lógjon ki a gomb
+      const pad = 14;
+
+      const minX = pad;
+      const maxX = cardRect.width - btnRect.width - pad;
+      const minY = 70; // picit lejjebb, hogy a cím közelében ne legyen
+      const maxY = cardRect.height - btnRect.height - pad;
+
+      // Ha túl kicsi a terület (mobilon), fallback
+      const x = (maxX > minX) ? (Math.random() * (maxX - minX) + minX) : pad;
+      const y = (maxY > minY) ? (Math.random() * (maxY - minY) + minY) : (cardRect.height * 0.65);
+
+      noBtn.style.left = x + "px";
+      noBtn.style.top  = y + "px";
+      noBtn.style.transform = "translate(0, 0)";
+    }
+
+    // A "Nem" gomb ne legyen lenyomható: mindig ugorjon el
+    noBtn.addEventListener("mouseenter", moveNoButton);
+    noBtn.addEventListener("touchstart", (e) => { e.preventDefault(); moveNoButton(); }, { passive: false });
+    noBtn.addEventListener("pointerdown", (e) => { e.preventDefault(); moveNoButton(); });
+
+    // Induláskor is mozgassuk kicsit, hogy érezhető legyen
+    window.addEventListener("load", () => setTimeout(moveNoButton, 150));
+    window.addEventListener("resize", () => moveNoButton());
+
+    // YES: felugrik a mosolygós cica
+    yesBtn.addEventListener("click", () => {
+      overlay.style.display = "grid";
+    });
+
+    function closePopup() {
+      overlay.style.display = "none";
+    }
+    closeBtn.addEventListener("click", closePopup);
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) closePopup();
+    });
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closePopup();
+    });
+  </script>
+</body>
+</html>
